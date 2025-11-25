@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fantasy Start/Sit Helper</title>
+  <style>
+    /* Basic reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #0A1A2F;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f7f7f7;
+    }
+
+    .app {
+      background: #ffffff;
+      color: #1c2430;
+      max-width: 900px;
+      width: 95%;
+      padding: 24px 24px 18px;
+      border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .app-header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .app-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 16px 0 18px;
+    }
+
+    button {
+      border: none;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: #0A1A2F;
+      color: #ffffff;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+      background: #122946;
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.secondary:hover {
+      background: #d1d5db;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 768px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 12px 12px 8px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .panel-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #374151;
+    }
+
+    .panel-title span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6b7280;
+    }
+
+    .player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .player-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      font-size: 0.85rem;
+    }
+
+    .player-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .player-initial {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: #0A1A2F;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .player-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .player-name {
+      font-weight: 600;
+    }
+
+    .player-meta {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    .player-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .status-green {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #bbf7d0;
+    }
+
+    .status-amber {
+      background: #fffbeb;
+      color: #b45309;
+      border-color: #fed7aa;
+    }
+
+    .status-red {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .panel.recommend {
+      background: #0f172a;
+      color: #e5e7eb;
+      border-color: #1e293b;
+      grid-column: span 2;
+    }
+
+    @media (max-width: 768px) {
+      .panel.recommend {
+        grid-column: span 1;
+      }
+    }
+
+    .panel.recommend .panel-title {
+      color: #e5e7eb;
+    }
+
+    .panel.recommend .panel-title span {
+      color: #9ca3af;
+    }
+
+    .recommend-body {
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .recommend-note {
+      color: #9ca3af;
+      font-size: 0.7rem;
+      margin-top: 6px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      color: #9ca3af;
+    }
+
+    .recommend-line {
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid #1e293b;
+    }
+
+    .recommend-line strong {
+      color: #e5e7eb;
+    }
+
+    .recommend-tag {
+      font-size: 0.7rem;
+      color: #93c5fd;
+      margin-left: 4px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      color: #6b7280;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+    }
+
+    .legend-green {
+      background: #00D97E;
+    }
+
+    .legend-amber {
+      background: #FFC145;
+    }
+
+    .legend-red {
+      background: #FF4D4D;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="app-title">Fantasy Start/Sit Helper</div>
+      <div class="app-subtitle">
+        Green = start, amber = be careful, red = sit (injury-based).
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="legend-dot legend-green"></span><span>Healthy</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot legend-amber"></span><span>Questionable</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot legend-red"></span><span>Out / IR</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="controls">
+      <!-- Hook this to your espn-api backend later -->
+      <button id="fetchFromEspn">Update injury status from ESPN API</button>
+      <button class="secondary" id="resetData">Reset to default lineup</button>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="panel-title">
+          Starters
+          <span>Click “Move” to send to bench</span>
+        </div>
+        <div id="startersList" class="player-list"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">
+          Bench
+          <span>Click “Move” to send to starters</span>
+        </div>
+        <div id="benchList" class="player-list"></div>
+      </div>
+
+      <div class="panel recommend">
+        <div class="panel-title">
+          Start/Sit Recommendations
+          <span class="badge">Injury-based only</span>
+        </div>
+        <div id="recommendations" class="recommend-body"></div>
+        <div class="recommend-note">
+          For now this uses simple mock statuses. When wired to your backend, this will reflect live ESPN injury data.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /********************
+     * Your real roster *
+     ********************/
+
+    const defaultPlayers = [
+      // --- STARTERS ---
+
+      // Defense
+      { id: 1,  name: "Jacksonville Defense", position: "DST",  team: "JAX", status: "healthy",      isStarter: true },
+
+      // QB
+      { id: 2,  name: "Jalen Hurts",          position: "QB",   team: "PHI", status: "healthy",      isStarter: true },
+
+      // WRs
+      { id: 3,  name: "Puka Nacua",           position: "WR",   team: "LAR", status: "healthy",      isStarter: true },
+      { id: 4,  name: "George Pickens",       position: "WR",   team: "PIT", status: "healthy",      isStarter: true },
+
+      // RBs
+      { id: 5,  name: "Bijan Robinson",       position: "RB",   team: "ATL", status: "healthy",      isStarter: true },
+      { id: 6,  name: "Jaylen Warren",        position: "RB",   team: "PIT", status: "healthy",      isStarter: true },
+
+      // TE
+      { id: 7,  name: "Jake Ferguson",        position: "TE",   team: "DAL", status: "healthy",      isStarter: true },
+
+      // FLEX spots (W/R/T)
+      { id: 8,  name: "Zach Charbonnet",      position: "FLEX", team: "SEA", status: "healthy",      isStarter: true },
+      { id: 9,  name: "Kenneth Gainwell",     position: "FLEX", team: "PHI", status: "healthy",      isStarter: true },
+
+      // K
+      { id: 10, name: "Chris Boswell",        position: "K",    team: "PIT", status: "healthy",      isStarter: true },
+
+      // --- BENCH ---
+
+      { id: 11, name: "Bucky Irving",         position: "RB",   team: "TB",  status: "healthy",      isStarter: false },
+      { id: 12, name: "Mark Andrews",         position: "TE",   team: "BAL", status: "healthy",      isStarter: false },
+      { id: 13, name: "Michael Pittman Jr",   position: "WR",   team: "IND", status: "healthy",      isStarter: false },
+      { id: 14, name: "J.K. Dobbins",         position: "RB",   team: "LAC", status: "healthy",      isStarter: false },
+      { id: 15, name: "Jared Goff",           position: "QB",   team: "DET", status: "healthy",      isStarter: false },
+      { id: 16, name: "J.J. McCarthy",        position: "QB",   team: "MIN", status: "healthy",      isStarter: false },
+      { id: 17, name: "T. Hunter",            position: "WR",   team: "FA",  status: "healthy",      isStarter: false }
+    ];
+
+    let players = JSON.parse(JSON.stringify(defaultPlayers)); // clone
+
+    const statusToCss = {
+      healthy: "status-green",
+      questionable: "status-amber",
+      out: "status-red"
+    };
+
+    const statusLabel = {
+      healthy: "Green · Good to play",
+      questionable: "Amber · Questionable",
+      out: "Red · Out / IR"
+    };
+
+    const startersList = document.getElementById("startersList");
+    const benchList = document.getElementById("benchList");
+    const recommendationsContainer = document.getElementById("recommendations");
+
+    function getInitials(name) {
+      return name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0].toUpperCase())
+        .join("");
+    }
+
+    function renderPlayers() {
+      startersList.innerHTML = "";
+      benchList.innerHTML = "";
+
+      players.forEach(player => {
+        const card = document.createElement("div");
+        card.className = "player-card";
+
+        const main = document.createElement("div");
+        main.className = "player-main";
+
+        const initial = document.createElement("div");
+        initial.className = "player-initial";
+        initial.textContent = getInitials(player.name);
+
+        const textWrap = document.createElement("div");
+        textWrap.className = "player-text";
+
+        const nameEl = document.createElement("div");
+        nameEl.className = "player-name";
+        nameEl.textContent = player.name;
+
+        const metaEl = document.createElement("div");
+        metaEl.className = "player-meta";
+        metaEl.textContent = `${player.position} · ${player.team}`;
+
+        textWrap.appendChild(nameEl);
+        textWrap.appendChild(metaEl);
+
+        main.appendChild(initial);
+        main.appendChild(textWrap);
+
+        const right = document.createElement("div");
+        right.className = "player-right";
+
+        const status = document.createElement("div");
+        status.className = `status-pill ${statusToCss[player.status]}`;
+        status.textContent = statusLabel[player.status];
+
+        const moveBtn = document.createElement("button");
+        moveBtn.textContent = player.isStarter ? "Move to Bench" : "Move to Starters";
+        moveBtn.classList.add("secondary");
+        moveBtn.style.fontSize = "0.7rem";
+        moveBtn.onclick = () => toggleStarter(player.id);
+
+        right.appendChild(status);
+        right.appendChild(moveBtn);
+
+        card.appendChild(main);
+        card.appendChild(right);
+
+        if (player.isStarter) {
+          startersList.appendChild(card);
+        } else {
+          benchList.appendChild(card);
+        }
+      });
+
+      renderRecommendations();
+    }
+
+    function statusScore(status) {
+      if (status === "healthy") return 2;
+      if (status === "questionable") return 1;
+      return 0;
+    }
+
+    function renderRecommendations() {
+      recommendationsContainer.innerHTML = "";
+
+      const starters = players.filter(p => p.isStarter);
+      const bench = players.filter(p => !p.isStarter);
+
+      const lines = [];
+
+      starters.forEach(starter => {
+        const samePosBench = bench.filter(
+          b => b.position === starter.position ||
+          (starter.position === "FLEX" && ["RB", "WR", "TE"].includes(b.position))
+        );
+
+        if (!samePosBench.length) return;
+
+        samePosBench.forEach(benchPlayer => {
+          const score = statusScore(starter.status) - statusScore(benchPlayer.status);
+          if (score > 0) {
+            lines.push({
+              starter,
+              benchPlayer,
+              severity: benchPlayer.status === "healthy" && starter.status === "out" ? "HIGH" : "MEDIUM"
+            });
+          }
+        });
+      });
+
+      if (!lines.length) {
+        const ok = document.createElement("div");
+        ok.className = "recommend-line";
+        ok.innerHTML = "<strong>Your current lineup looks good based on injury status.</strong>";
+        recommendationsContainer.appendChild(ok);
+        return;
+      }
+
+      lines.sort((a, b) => statusScore(a.starter.status) - statusScore(b.starter.status));
+
+      lines.forEach(line => {
+        const row = document.createElement("div");
+        row.className = "recommend-line";
+
+        const severityTag = line.severity === "HIGH"
+          ? "🚨 Strong injury risk"
+          : "⚠️ Consider swapping";
+
+        row.innerHTML = `
+          <strong>${line.starter.name}</strong> (${line.starter.position}, ${line.starter.team}) is 
+          <span class="recommend-tag">${statusLabel[line.starter.status]}</span>.
+          <br />
+          You could start <strong>${line.benchPlayer.name}</strong> (${line.benchPlayer.position}, ${line.benchPlayer.team}) instead
+          — they are <span class="recommend-tag">${statusLabel[line.benchPlayer.status]}</span>.
+          <br />
+          <span style="font-size:0.72rem; color:#9ca3af;">${severityTag}</span>
+        `;
+        recommendationsContainer.appendChild(row);
+      });
+    }
+
+    function toggleStarter(id) {
+      players = players.map(p =>
+        p.id === id ? { ...p, isStarter: !p.isStarter } : p
+      );
+      renderPlayers();
+    }
+
+    /***************************************
+     * Placeholder: ESPN backend hook      *
+     ***************************************/
+    async function fetchFromEspnApi() {
+      try {
+        // When you build the Python backend with espn-api,
+        // point this to your real endpoint:
+        // const res = await fetch("http://localhost:5000/api/injuries");
+        const res = await fetch("/api/injuries"); // adjust as needed
+
+        if (!res.ok) throw new Error("Network response was not ok");
+
+        const data = await res.json();
+        // Expected: [{ id: 2, status: "questionable" }, ...]
+        players = players.map(p => {
+          const update = data.find(u => u.id === p.id);
+          return update? { ...p, status: update.status } : p;
+        });
+
+        renderPlayers();
+      } catch (err) {
+        console.error(err);
+        alert("Could not load data from ESPN backend. Using local statuses only.");
+      }
+    }
+
+    document.getElementById("fetchFromEspn").addEventListener("click", fetchFromEspnApi);
+
+    document.getElementById("resetData").addEventListener("click", () => {
+      players = JSON.parse(JSON.stringify(defaultPlayers));
+      renderPlayers();
+    });
+
+    // Initial render
+    renderPlayers();
+  </script>
+</body>
+</html>
