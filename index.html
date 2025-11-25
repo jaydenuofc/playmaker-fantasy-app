@@ -562,10 +562,7 @@
      ***************************************/
     async function fetchFromEspnApi() {
       try {
-        // When you build the Python backend with espn-api,
-        // point this to your real endpoint:
-        // const res = await fetch("http://localhost:5000/api/injuries");
-        const res = await fetch("/api/injuries"); // adjust as needed
+        const res = await fetch("https://playmaker-backend.onrender.com/api/injuries");
 
         if (!res.ok) throw new Error("Network response was not ok");
 
