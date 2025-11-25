@@ -6,6 +6,22 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+@app.get("/")
+def home():
+    return "PlayMaker backend is running. Try /api/injuries for data."
+
+@app.get("/health")
+def health():
+    return jsonify({"status": "ok"})
+
+# ========================
+#  CONFIGURATION
+# ========================
+
+API_KEY = os.getenv("API_SPORTS_KEY")
+...
+
+
 # ========================
 #  CONFIGURATION
 # ========================
