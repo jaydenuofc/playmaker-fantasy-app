@@ -4,23 +4,11 @@ from espn_api.football import League
 import os
 
 app = Flask(__name__)
-CORS(app)  # allow requests from your GitHub Pages site
+CORS(app)
 
-# 1. ESPN league configuration (fill these via env vars on Render later)
-LEAGUE_ID = int(os.getenv("LEAGUE_ID", "123456"))  # temporary default
-YEAR = int(os.getenv("YEAR", "2024"))
-
-SWID = os.getenv("ESPN_SWID")   # for private leagues
-ESPN_S2 = os.getenv("ESPN_S2")  # for private leagues
-
-if SWID and ESPN_S2:
-    league = League(league_id=LEAGUE_ID, year=YEAR, swid=SWID, espn_s2=ESPN_S2)
-else:
-    league = League(league_id=LEAGUE_ID, year=YEAR)
-
-# 2. Mapping between your front-end IDs and ESPN names
+# Mapping between your front-end IDs and ESPN names
 ID_TO_NAME = {
-    1:  "Jacksonville Jaguars D/ST",  # adjust to exact ESPN name if needed
+    1:  "Jacksonville Jaguars D/ST",  # adjust if ESPN uses a slightly different name
     2:  "Jalen Hurts",
     3:  "Puka Nacua",
     4:  "George Pickens",
@@ -36,7 +24,7 @@ ID_TO_NAME = {
     14: "J.K. Dobbins",
     15: "Jared Goff",
     16: "J.J. McCarthy",
-    17: "T. Hunter",  # update once you know ESPN’s exact name
+    17: "T. Hunter",
 }
 
 NAME_TO_ID = {name: pid for pid, name in ID_TO_NAME.items()}
@@ -46,7 +34,6 @@ def espn_status_to_frontend(es_status: str) -> str:
     """Convert ESPN injury status into 'healthy' / 'questionable' / 'out'."""
     if not es_status:
         return "healthy"
-
     s = es_status.upper()
     if s in ("OUT", "IR", "SUSPENSION", "PUP", "COVID-19"):
         return "out"
@@ -55,13 +42,37 @@ def espn_status_to_frontend(es_status: str) -> str:
     return "healthy"
 
 
+def get_league():
+    """Create a League object from env vars. Raises if misconfigured."""
+    league_id = int(os.getenv("LEAGUE_ID", "0"))
+    year = int(os.getenv("YEAR", "2024"))
+    swid = os.getenv("ESPN_SWID")
+    espn_s2 = os.getenv("ESPN_S2")
+
+    if league_id == 0:
+        raise ValueError("LEAGUE_ID is not set in environment variables")
+
+    # Private league (needs cookies)
+    if swid and espn_s2:
+        return League(league_id=league_id, year=year, swid=swid, espn_s2=espn_s2)
+
+    # Public league
+    return League(league_id=league_id, year=year)
+
+
 @app.get("/api/injuries")
 def injuries():
-    """
-    JSON: [ { "id": 2, "status": "questionable" }, ... ]
-    """
-    updates = []
+    try:
+        league = get_league()
+    except Exception as e:
+        # App stays alive; you see this in logs and frontend gets a JSON error
+        app.logger.exception("Error creating ESPN League")
+        return jsonify({
+            "error": "League configuration problem",
+            "details": str(e)
+        }), 500
 
+    updates = []
     for team in league.teams:
         for p in team.roster:
             name = p.name
@@ -78,5 +89,4 @@ def injuries():
 
 
 if __name__ == "__main__":
-    # Local testing: python backend.py
     app.run(debug=True, host="0.0.0.0", port=5000)
